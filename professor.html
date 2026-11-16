@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pré-Conselho - Painel do Professor</title>
+
+    <script>
+        (function() {
+            const usuarioRaw = localStorage.getItem('usuario') || localStorage.getItem('user');
+            if (!usuarioRaw) { window.location.href = 'index.html'; return; }
+            try {
+                const usuario = JSON.parse(usuarioRaw);
+                if (!usuario.id) { throw new Error('Sessão inválida'); }
+            } catch (e) {
+                localStorage.clear();
+                window.location.href = 'index.html';
+            }
+        })();
+    </script>
+
+    <style>
+        :root {
+            --bg-color: #ffffff;
+            --card-bg: #f8f9fa;
+            --text-color: #000000;
+            --border-color: #d1d5db;
+            --primary-blue: #0056b3;
+            --primary-hover: #003d82;
+            --danger-red: #cc0000;
+            --input-bg: #ffffff;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --success-green: #198754;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #000000;
+            --card-bg: #121212;
+            --text-color: #ffffff;
+            --border-color: #27272a;
+            --primary-blue: #1f6beb;
+            --primary-hover: #388bfd;
+            --danger-red: #ff4d4d;
+            --input-bg: #1a1a1a;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+            --success-green: #2ec4b6;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        header {
+            display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem;
+            background-color: var(--card-bg); border-bottom: 1px solid var(--border-color);
+        }
+
+        .header-title { font-size: 1.25rem; font-weight: 700; color: var(--primary-blue); }
+        .header-actions { display: flex; align-items: center; gap: 1rem; }
+        .user-badge { font-size: 0.85rem; font-weight: 600; background: var(--primary-blue); color: #fff; padding: 0.3rem 0.8rem; border-radius: 20px; }
+
+        .icon-btn { background: none; border: 1px solid var(--border-color); padding: 8px; border-radius: 8px; cursor: pointer; color: var(--text-color); }
+        .icon-btn svg { width: 20px; height: 20px; fill: currentColor; }
+        .btn-logout { background-color: var(--danger-red); color: #ffffff; border: none; padding: 0.5rem 1rem; border-radius: 6px; font-weight: 600; cursor: pointer; }
+
+        main { flex: 1; padding: 2rem; max-width: 900px; width: 100%; margin: 0 auto; }
+
+        .nav-tabs { display: flex; gap: 0.5rem; border-bottom: 2px solid var(--border-color); margin-bottom: 1.5rem; }
+        .nav-tab-btn { padding: 0.75rem 1.25rem; background: none; border: none; color: var(--text-color); font-weight: 600; font-size: 0.95rem; cursor: pointer; opacity: 0.6; border-bottom: 3px solid transparent; }
+        .nav-tab-btn.active { opacity: 1; border-bottom-color: var(--primary-blue); color: var(--primary-blue); }
+
+        .tab-section { display: none; background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; box-shadow: var(--shadow); }
+        .tab-section.active { display: block; }
+
+        .form-group { margin-bottom: 1.25rem; }
+        .form-group label { display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--primary-blue); }
+        .form-group select, .form-group textarea, .form-group input {
+            width: 100%; padding: 0.75rem; background-color: var(--input-bg); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); outline: none; font-size: 0.95rem;
+        }
+
+        .category-block {
+            margin-bottom: 1.5rem; padding: 1.25rem; border: 1px solid var(--border-color); border-radius: 10px; background-color: var(--input-bg);
+        }
+        .category-header { font-size: 1.05rem; font-weight: 700; color: var(--primary-blue); margin-bottom: 1rem; border-bottom: 1px dashed var(--border-color); padding-bottom: 0.5rem; }
+
+        .question-item { margin-bottom: 1.25rem; }
+        .question-label { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.5rem; display: block; }
+
+        .btn-primary { background-color: var(--primary-blue); color: #ffffff; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 1rem; width: 100%; transition: background-color 0.2s; }
+        .btn-primary:hover { background-color: var(--primary-hover); }
+
+        .badge-cat { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.75rem; font-weight: 700; background-color: var(--primary-blue); color: white; margin-bottom: 0.5rem; }
+
+        .empty-notice { text-align: center; padding: 2rem; opacity: 0.7; font-size: 0.95rem; }
+
+        .resposta-card { border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; margin-bottom: 1rem; background-color: var(--input-bg); }
+        .resposta-header { font-weight: 700; color: var(--primary-blue); margin-bottom: 0.5rem; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-title">Pré-Conselho - Professor</div>
+        <div class="header-actions">
+            <span id="userBadge" class="user-badge">Professor</span>
+            <button id="themeToggle" class="icon-btn" aria-label="Alternar Tema">
+                <svg id="themeIcon" viewBox="0 0 24 24"><path d="M12.3 2a10 10 0 0 0 9.7 11.5 10 10 0 1 1-11.5-9.7z"/></svg>
+            </button>
+            <button onclick="fazerLogout()" class="btn-logout">Sair</button>
+        </div>
+    </header>
+
+    <main>
+        <div class="nav-tabs">
+            <button class="nav-tab-btn active" onclick="switchSection(event, 'preencher')">Preencher Ficha</button>
+            <button class="nav-tab-btn" onclick="switchSection(event, 'minhas-respostas')">Minhas Submissões</button>
+        </div>
+
+        <!-- ABA 1: PREENCHIMENTO DA FICHA -->
+        <div id="sec-preencher" class="tab-section active">
+            <form id="formSelecao" style="margin-bottom: 1.5rem;">
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <div class="form-group" style="flex: 1; min-width: 220px;">
+                        <label for="selectTurma">Selecione a Turma</label>
+                        <select id="selectTurma" required onchange="carregarPerguntasDaFicha()">
+                            <option value="">Carregando turmas...</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex: 1; min-width: 220px;">
+                        <label for="selectMateria">Selecione a Matéria</label>
+                        <select id="selectMateria" required onchange="carregarPerguntasDaFicha()">
+                            <option value="">Carregando matérias...</option>
+                        </select>
+                    </div>
+                </div>
+            </form>
+
+            <form id="formFichaAvaliacao">
+                <div id="containerPerguntas">
+                    <div class="empty-notice">Selecione a Turma e a Matéria acima para carregar a ficha avaliativa.</div>
+                </div>
+
+                <button type="submit" id="btnEnviarFicha" class="btn-primary" style="display: none; margin-top: 1.5rem;">Submeter Respostas do Pré-Conselho</button>
+            </form>
+        </div>
+
+        <!-- ABA 2: HISTÓRICO DE RESPOSTAS SUBMETIDAS -->
+        <div id="sec-minhas-respostas" class="tab-section">
+            <div style="font-size: 1.1rem; font-weight: 700; color: var(--primary-blue); margin-bottom: 1rem;">Minhas Respostas Submetidas</div>
+            <div id="containerMinhasRespostas">Carregando histórico...</div>
+        </div>
+    </main>
+
+    <script>
+        const usuarioLogado = JSON.parse(localStorage.getItem('usuario') || localStorage.getItem('user') || '{}');
+        document.getElementById('userBadge').textContent = usuarioLogado.nome || 'Professor';
+
+        async function requestAPI(url, options = {}) {
+            try {
+                const config = {
+                    headers: { 'Content-Type': 'application/json' },
+                    ...options
+                };
+                if (config.body && typeof config.body === 'object') {
+                    config.body = JSON.stringify(config.body);
+                }
+                const res = await fetch(url, config);
+                const data = await res.json();
+                if (!res.ok || data.error) { throw new Error(data.error || 'Erro de comunicação com o servidor'); }
+                return data;
+            } catch (err) {
+                alert(err.message);
+                return null;
+            }
+        }
+
+        // TEMA DARK
+        const themeBtn = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+        const moonSvg = `<path d="M12.3 2a10 10 0 0 0 9.7 11.5 10 10 0 1 1-11.5-9.7z"/>`;
+        const sunSvg = `<path d="M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0-5a1 1 0 0 1 1 1v2a1 1 0 0 1-2 0V3a1 1 0 0 1 1-1zm0 17a1 1 0 0 1 1 1v2a1 1 0 0 1-2 0v-2a1 1 0 0 1 1-1zm9-9a1 1 0 0 1-1 1h-2a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1zM5 12a1 1 0 0 1-1 1H2a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1zm14.364-6.364a1 1 0 0 1 0 1.414l-1.414 1.414a1 1 0 0 1-1.414-1.414l1.414-1.414a1 1 0 0 1 1.414 0zM7.05 16.95a1 1 0 0 1 0 1.414l-1.414 1.414a1 1 0 0 1-1.414-1.414l1.414-1.414a1 1 0 0 1 1.414 0zm12.728 12.728a1 1 0 0 1-1.414 0l-1.414-1.414a1 1 0 0 1 1.414-1.414l1.414 1.414a1 1 0 0 1 0 1.414zM7.05 7.05a1 1 0 0 1-1.414 0L4.222 5.636a1 1 0 0 1 1.414-1.414l1.414 1.414a1 1 0 0 1 0 1.414z"/>`;
+
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            themeIcon.innerHTML = sunSvg;
+        }
+
+        themeBtn.addEventListener('click', () => {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            document.documentElement.toggleAttribute('data-theme', !isDark);
+            localStorage.setItem('theme', isDark ? 'light' : 'dark');
+            themeIcon.innerHTML = isDark ? moonSvg : sunSvg;
+        });
+
+        function fazerLogout() { localStorage.clear(); window.location.href = 'index.html'; }
+
+        function switchSection(e, sec) {
+            document.querySelectorAll('.nav-tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
+
+            if (e) e.target.classList.add('active');
+            document.getElementById(`sec-${sec}`).classList.add('active');
+
+            if (sec === 'minhas-respostas') carregarMinhasRespostas();
+        }
+
+        // CARREGAR TURMAS E MATÉRIAS DO PROFESSOR (OU GERAIS)
+        async function carregarFiltrosIniciais() {
+            const [vinculos, turmasGerais, materiasGerais] = await Promise.all([
+                requestAPI('/api/vinculos'),
+                requestAPI('/api/turmas'),
+                requestAPI('/api/materias')
+            ]);
+
+            const meusVinculos = (vinculos || []).filter(v => 
+                String(v.professor_id) === String(usuarioLogado.id) || 
+                String(v.usuario_id) === String(usuarioLogado.id)
+            );
+
+            let turmasOpcoes = [];
+            let materiasOpcoes = [];
+
+            if (meusVinculos.length > 0) {
+                const turmasUnicas = new Map();
+                const materiasUnicas = new Map();
+
+                meusVinculos.forEach(v => {
+                    if (v.turmas) turmasUnicas.set(v.turmas.id, v.turmas.nome);
+                    if (v.materias) materiasUnicas.set(v.materias.id, v.materias.nome);
+                });
+
+                turmasOpcoes = Array.from(turmasUnicas, ([id, nome]) => ({ id, nome }));
+                materiasOpcoes = Array.from(materiasUnicas, ([id, nome]) => ({ id, nome }));
+            }
+
+            // Fallback para todas as turmas/matérias caso o professor não tenha vínculo configurado
+            if (turmasOpcoes.length === 0) turmasOpcoes = turmasGerais || [];
+            if (materiasOpcoes.length === 0) materiasOpcoes = materiasGerais || [];
+
+            const selectT = document.getElementById('selectTurma');
+            selectT.innerHTML = '<option value="">Selecione a Turma</option>' + 
+                turmasOpcoes.map(t => `<option value="${t.id}">${t.nome}</option>`).join('');
+
+            const selectM = document.getElementById('selectMateria');
+            selectM.innerHTML = '<option value="">Selecione a Matéria</option>' + 
+                materiasOpcoes.map(m => `<option value="${m.id}">${m.nome}</option>`).join('');
+        }
+
+        // CARREGAR FICHA DE PERGUNTAS FILTRADAS E AGRUPADAS POR CATEGORIA
+        async function carregarPerguntasDaFicha() {
+            const turmaId = document.getElementById('selectTurma').value;
+            const materiaId = document.getElementById('selectMateria').value;
+            const container = document.getElementById('containerPerguntas');
+            const btnEnviar = document.getElementById('btnEnviarFicha');
+
+            if (!turmaId || !materiaId) {
+                container.innerHTML = '<div class="empty-notice">Selecione a Turma e a Matéria acima para carregar a ficha avaliativa.</div>';
+                btnEnviar.style.display = 'none';
+                return;
+            }
+
+            const perguntas = await requestAPI('/api/perguntas');
+
+            if (!perguntas || perguntas.length === 0) {
+                container.innerHTML = '<div class="empty-notice">Nenhuma pergunta/critério cadastrado para esta ficha.</div>';
+                btnEnviar.style.display = 'none';
+                return;
+            }
+
+            // Filtra perguntas aplicáveis à turma/matéria ou genéricas
+            const aplicaveis = perguntas.filter(p => {
+                const bateTurma = !p.turma_id || String(p.turma_id) === String(turmaId);
+                const bateMateria = !p.materia_id || String(p.materia_id) === String(materiaId);
+                return bateTurma && bateMateria;
+            });
+
+            if (aplicaveis.length === 0) {
+                container.innerHTML = '<div class="empty-notice">Nenhum critério ativo encontrado para a turma e matéria selecionadas.</div>';
+                btnEnviar.style.display = 'none';
+                return;
+            }
+
+            // Agrupar por Categoria
+            const porCategoria = {};
+            aplicaveis.forEach(p => {
+                const cat = p.categoria || 'Geral';
+                if (!porCategoria[cat]) porCategoria[cat] = [];
+                porCategoria[cat].push(p);
+            });
+
+            let html = '';
+            for (let cat in porCategoria) {
+                html += `
+                    <div class="category-block">
+                        <div class="category-header">${cat}</div>
+                `;
+
+                porCategoria[cat].forEach(p => {
+                    const texto = p.texto_pergunta || p.texto || p.pergunta || 'Critério';
+                    html += `
+                        <div class="question-item">
+                            <label class="question-label" for="resp_${p.id}">${texto}</label>
+                            <textarea id="resp_${p.id}" class="input-resposta" data-pergunta-id="${p.id}" rows="2" placeholder="Digite a sua observação/avaliação sobre a turma..." required></textarea>
+                        </div>
+                    `;
+                });
+
+                html += `</div>`;
+            }
+
+            container.innerHTML = html;
+            btnEnviar.style.display = 'block';
+        }
+
+        // SUBMIT DAS RESPOSTAS
+        document.getElementById('formFichaAvaliacao').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const turma_id = document.getElementById('selectTurma').value;
+            const materia_id = document.getElementById('selectMateria').value;
+            const professor_id = usuarioLogado.id;
+
+            const textareas = document.querySelectorAll('.input-resposta');
+            let salvos = 0;
+
+            for (let area of textareas) {
+                const pergunta_id = area.getAttribute('data-pergunta-id');
+                const resposta = area.value.trim();
+
+                if (pergunta_id && resposta) {
+                    const res = await requestAPI('/api/respostas', {
+                        method: 'POST',
+                        body: {
+                            pergunta_id,
+                            turma_id,
+                            materia_id,
+                            professor_id,
+                            usuario_id: professor_id,
+                            resposta,
+                            texto_resposta: resposta
+                        }
+                    });
+                    if (res) salvos++;
+                }
+            }
+
+            if (salvos > 0) {
+                alert('Respostas do Pré-Conselho enviadas com sucesso!');
+                document.getElementById('formFichaAvaliacao').reset();
+                carregarPerguntasDaFicha();
+            }
+        });
+
+        // HISTÓRICO DO PROFESSOR
+        async function carregarMinhasRespostas() {
+            const container = document.getElementById('containerMinhasRespostas');
+            const respostas = await requestAPI('/api/respostas');
+
+            if (!respostas || respostas.length === 0) {
+                container.innerHTML = '<div class="empty-notice">Você ainda não submeteu respostas.</div>';
+                return;
+            }
+
+            const minhas = respostas.filter(r => 
+                String(r.professor_id) === String(usuarioLogado.id) || 
+                String(r.usuario_id) === String(usuarioLogado.id)
+            );
+
+            if (minhas.length === 0) {
+                container.innerHTML = '<div class="empty-notice">Você ainda não submeteu respostas para nenhuma ficha.</div>';
+                return;
+            }
+
+            container.innerHTML = minhas.map(r => `
+                <div class="resposta-card">
+                    <div class="resposta-header">
+                        Turma: ${r.turmas?.nome || 'N/A'} | Matéria: ${r.materias?.nome || 'N/A'}
+                    </div>
+                    <div>
+                        <span class="badge-cat">${r.perguntas?.categoria || 'Geral'}</span><br>
+                        <strong>Critério:</strong> ${r.perguntas?.texto_pergunta || r.perguntas?.texto || r.perguntas?.pergunta || 'Critério'}<br>
+                        <strong>Sua Resposta:</strong> ${r.resposta || r.texto_resposta || 'Sem resposta'}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        carregarFiltrosIniciais();
+    </script>
+</body>
+</html>

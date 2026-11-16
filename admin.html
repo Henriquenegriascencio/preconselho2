@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pré-Conselho - Painel de Administração</title>
+    
+    <script>
+        (function() {
+            const usuarioRaw = localStorage.getItem('usuario') || localStorage.getItem('user');
+            if (!usuarioRaw) { window.location.href = 'index.html'; return; }
+            try {
+                const usuario = JSON.parse(usuarioRaw);
+                const tipo = String(usuario.tipo || usuario.role || '').toLowerCase();
+                if (tipo !== 'admin') {
+                    alert('Acesso negado: Perfil de Administrador necessário.');
+                    window.location.href = 'index.html';
+                }
+            } catch (e) {
+                localStorage.clear();
+                window.location.href = 'index.html';
+            }
+        })();
+    </script>
+
+    <style>
+        :root {
+            --bg-color: #ffffff;
+            --card-bg: #f8f9fa;
+            --text-color: #000000;
+            --border-color: #d1d5db;
+            --primary-blue: #0056b3;
+            --primary-hover: #003d82;
+            --danger-red: #cc0000;
+            --input-bg: #ffffff;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --table-header-bg: #e9ecef;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #000000;
+            --card-bg: #121212;
+            --text-color: #ffffff;
+            --border-color: #27272a;
+            --primary-blue: #1f6beb;
+            --primary-hover: #388bfd;
+            --danger-red: #ff4d4d;
+            --input-bg: #1a1a1a;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+            --table-header-bg: #1e1e1e;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+
+        body { background-color: var(--bg-color); color: var(--text-color); min-height: 100vh; display: flex; flex-direction: column; transition: background-color 0.3s, color 0.3s; }
+
+        header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background-color: var(--card-bg); border-bottom: 1px solid var(--border-color); }
+        .header-title { font-size: 1.25rem; font-weight: 700; color: var(--primary-blue); }
+        .header-actions { display: flex; align-items: center; gap: 1rem; }
+        .user-badge { font-size: 0.85rem; font-weight: 600; background: var(--primary-blue); color: #fff; padding: 0.3rem 0.8rem; border-radius: 20px; }
+
+        .icon-btn { background: none; border: 1px solid var(--border-color); padding: 8px; border-radius: 8px; cursor: pointer; color: var(--text-color); }
+        .icon-btn svg { width: 20px; height: 20px; fill: currentColor; }
+        .btn-logout { background-color: var(--danger-red); color: #ffffff; border: none; padding: 0.5rem 1rem; border-radius: 6px; font-weight: 600; cursor: pointer; }
+
+        main { flex: 1; padding: 2rem; max-width: 1200px; width: 100%; margin: 0 auto; }
+
+        .nav-tabs { display: flex; gap: 0.5rem; border-bottom: 2px solid var(--border-color); margin-bottom: 1.5rem; flex-wrap: wrap; }
+        .nav-tab-btn { padding: 0.75rem 1.25rem; background: none; border: none; color: var(--text-color); font-weight: 600; font-size: 0.95rem; cursor: pointer; opacity: 0.6; border-bottom: 3px solid transparent; }
+        .nav-tab-btn.active { opacity: 1; border-bottom-color: var(--primary-blue); color: var(--primary-blue); }
+
+        .tab-section { display: none; background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; box-shadow: var(--shadow); }
+        .tab-section.active { display: block; }
+
+        .section-header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .section-title { font-size: 1.2rem; font-weight: 700; color: var(--primary-blue); }
+
+        .btn-primary { background-color: var(--primary-blue); color: #ffffff; border: none; padding: 0.65rem 1.2rem; border-radius: 6px; font-weight: 600; cursor: pointer; }
+        .btn-primary:hover { background-color: var(--primary-hover); }
+        .btn-secondary { background-color: transparent; color: var(--text-color); border: 1px solid var(--border-color); padding: 0.65rem 1.2rem; border-radius: 6px; font-weight: 600; cursor: pointer; }
+
+        .fichas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.25rem; margin-top: 1rem; }
+        .ficha-card { background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between; box-shadow: var(--shadow); }
+        .ficha-card-title { font-size: 1.1rem; font-weight: 700; color: var(--primary-blue); margin-bottom: 0.5rem; }
+        .ficha-card-info { font-size: 0.9rem; margin-bottom: 0.3rem; opacity: 0.85; }
+        .badge-cat { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.75rem; font-weight: 700; background-color: var(--primary-blue); color: white; margin-top: 0.5rem; }
+        .ficha-card-actions { margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 1rem; }
+        .modal-overlay.active { display: flex; }
+        .modal-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; width: 100%; max-width: 650px; max-height: 90vh; overflow-y: auto; padding: 1.75rem; box-shadow: var(--shadow); }
+        .modal-title { font-size: 1.25rem; font-weight: 700; color: var(--primary-blue); margin-bottom: 1.25rem; }
+
+        .form-group { margin-bottom: 1.25rem; }
+        .form-group label { display: block; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.4rem; }
+        .form-group input, .form-group select { width: 100%; padding: 0.7rem; background-color: var(--input-bg); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-color); outline: none; }
+
+        .pergunta-row { display: flex; gap: 0.5rem; margin-bottom: 0.75rem; align-items: center; }
+        .pergunta-row input { flex: 2; }
+        .pergunta-row select { flex: 1; }
+
+        .btn-remove-row { background: var(--danger-red); color: white; border: none; padding: 0.6rem; border-radius: 6px; cursor: pointer; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        th, td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        th { background-color: var(--table-header-bg); font-weight: 600; }
+        .btn-delete { background-color: var(--danger-red); color: white; border: none; padding: 0.35rem 0.75rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem; }
+
+        .resposta-card { border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; margin-bottom: 1rem; background-color: var(--input-bg); }
+        .resposta-header { font-weight: 700; color: var(--primary-blue); margin-bottom: 0.5rem; }
+        .resposta-item { margin-top: 0.5rem; padding-left: 0.5rem; border-left: 3px solid var(--primary-blue); }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-title">Painel do Administrador</div>
+        <div class="header-actions">
+            <span id="userBadge" class="user-badge">Admin</span>
+            <button id="themeToggle" class="icon-btn" aria-label="Alternar Tema">
+                <svg id="themeIcon" viewBox="0 0 24 24"><path d="M12.3 2a10 10 0 0 0 9.7 11.5 10 10 0 1 1-11.5-9.7z"/></svg>
+            </button>
+            <button onclick="fazerLogout()" class="btn-logout">Sair</button>
+        </div>
+    </header>
+
+    <main>
+        <div class="nav-tabs">
+            <button class="nav-tab-btn active" onclick="switchSection(event, 'fichas')">Fichas Avaliativas</button>
+            <button class="nav-tab-btn" onclick="switchSection(event, 'respostas')">Respostas dos Professores</button>
+            <button class="nav-tab-btn" onclick="switchSection(event, 'turmas')">Turmas</button>
+            <button class="nav-tab-btn" onclick="switchSection(event, 'materias')">Matérias</button>
+            <button class="nav-tab-btn" onclick="switchSection(event, 'professores')">Professores</button>
+            <button class="nav-tab-btn" onclick="switchSection(event, 'vinculos')">Vínculos</button>
+        </div>
+
+        <div id="sec-fichas" class="tab-section active">
+            <div class="section-header-flex">
+                <div>
+                    <div class="section-title">Fichas Avaliativas</div>
+                    <p style="font-size:0.875rem; opacity:0.8;">Fichas configuradas para o pré-conselho escolar.</p>
+                </div>
+                <button class="btn-primary" onclick="abrirModalFicha()">+ Criar Nova Ficha</button>
+            </div>
+            <div id="gridFichas" class="fichas-grid"></div>
+        </div>
+
+        <div id="sec-respostas" class="tab-section">
+            <div class="section-title">Respostas Submetidas pelos Professores</div>
+            <div id="containerRespostas">Carregando respostas...</div>
+        </div>
+
+        <div id="sec-turmas" class="tab-section">
+            <div class="section-title">Gerenciamento de Turmas</div>
+            <form id="formTurma" style="display:flex; gap:1rem; margin-bottom:1rem;">
+                <input type="text" id="inputTurmaNome" placeholder="Ex: 9º Ano A" required style="flex:1; padding:0.6rem; border-radius:6px; border:1px solid var(--border-color); background:var(--input-bg); color:var(--text-color);">
+                <button type="submit" class="btn-primary">Adicionar Turma</button>
+            </form>
+            <table><thead><tr><th>Nome da Turma</th><th>Ações</th></tr></thead><tbody id="tabelaTurmas"></tbody></table>
+        </div>
+
+        <div id="sec-materias" class="tab-section">
+            <div class="section-title">Gerenciamento de Matérias</div>
+            <form id="formMateria" style="display:flex; gap:1rem; margin-bottom:1rem;">
+                <input type="text" id="inputMateriaNome" placeholder="Ex: Matemática" required style="flex:1; padding:0.6rem; border-radius:6px; border:1px solid var(--border-color); background:var(--input-bg); color:var(--text-color);">
+                <button type="submit" class="btn-primary">Adicionar Matéria</button>
+            </form>
+            <table><thead><tr><th>Nome da Matéria</th><th>Ações</th></tr></thead><tbody id="tabelaMaterias"></tbody></table>
+        </div>
+
+        <div id="sec-professores" class="tab-section">
+            <div class="section-title">Professores Cadastrados</div>
+            <form id="formProfessor" style="display:flex; gap:1rem; margin-bottom:1rem; flex-wrap:wrap;">
+                <input type="text" id="inputProfNome" placeholder="Nome do Professor" required style="flex:1; padding:0.6rem; border-radius:6px; border:1px solid var(--border-color); background:var(--input-bg); color:var(--text-color);">
+                <input type="email" id="inputProfEmail" placeholder="email@escola.com" required style="flex:1; padding:0.6rem; border-radius:6px; border:1px solid var(--border-color); background:var(--input-bg); color:var(--text-color);">
+                <button type="submit" class="btn-primary">Cadastrar Professor</button>
+            </form>
+            <table><thead><tr><th>Nome</th><th>E-mail</th><th>Tipo</th><th>Ações</th></tr></thead><tbody id="tabelaProfessores"></tbody></table>
+        </div>
+
+        <div id="sec-vinculos" class="tab-section">
+            <div class="section-title">Vincular Professor a Turma e Matéria</div>
+            <form id="formVinculo" style="display:flex; gap:1rem; margin-bottom:1rem; flex-wrap:wrap;">
+                <select id="selectProfVinculo" required style="flex:1; padding:0.6rem; border-radius:6px; border:1px solid var(--border-color); background:var(--input-bg); color:var(--text-color);"><option value="">Selecione o Professor</option></select>
+                <select id="selectTurmaVinculo" required style="flex:1; padding:0.6rem; border-radius:6px; border:1px solid var(--border-color); background:var(--input-bg); color:var(--text-color);"><option value="">Selecione a Turma</option></select>
+                <select id="selectMateriaVinculo" required style="flex:1; padding:0.6rem; border-radius:6px; border:1px solid var(--border-color); background:var(--input-bg); color:var(--text-color);"><option value="">Selecione a Matéria</option></select>
+                <button type="submit" class="btn-primary">Criar Vínculo</button>
+            </form>
+            <table><thead><tr><th>Professor</th><th>Turma</th><th>Matéria</th></tr></thead><tbody id="tabelaVinculos"></tbody></table>
+        </div>
+    </main>
+
+    <div id="modalFicha" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-title">Criar Nova Ficha Avaliativa</div>
+            <form id="formNovaFicha">
+                <div class="form-group">
+                    <label for="modalTurma">Turma Alvo</label>
+                    <select id="modalTurma"><option value="">Aplicar a: Todas as Turmas</option></select>
+                </div>
+                <div class="form-group">
+                    <label for="modalMateria">Matéria Alvo</label>
+                    <select id="modalMateria"><option value="">Aplicar a: Todas as Matérias</option></select>
+                </div>
+                <div class="form-group">
+                    <label>Critérios / Perguntas da Ficha</label>
+                    <div id="containerPerguntasModal"></div>
+                    <button type="button" class="btn-secondary" onclick="adicionarLinhaPergunta()" style="width:100%; margin-top:0.5rem;">+ Adicionar Pergunta</button>
+                </div>
+                <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top:1.5rem;">
+                    <button type="button" class="btn-secondary" onclick="fecharModalFicha()">Cancelar</button>
+                    <button type="submit" class="btn-primary">Salvar Ficha</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const usuarioLogado = JSON.parse(localStorage.getItem('usuario') || localStorage.getItem('user') || '{}');
+        document.getElementById('userBadge').textContent = usuarioLogado.nome || 'Administrador';
+
+        async function requestAPI(url, options = {}) {
+            try {
+                const config = {
+                    headers: { 'Content-Type': 'application/json' },
+                    ...options
+                };
+                if (config.body && typeof config.body === 'object') {
+                    config.body = JSON.stringify(config.body);
+                }
+                const res = await fetch(url, config);
+                const data = await res.json();
+                if (!res.ok || data.error) {
+                    throw new Error(data.error || 'Erro na requisição');
+                }
+                return data;
+            } catch (err) {
+                alert(err.message);
+                return null;
+            }
+        }
+
+        async function deletarItem(url, callback) {
+            if (!confirm('Deseja realmente excluir este item?')) return;
+            const res = await requestAPI(url, { method: 'DELETE' });
+            if (res) callback();
+        }
+
+        function switchSection(e, sec) {
+            document.querySelectorAll('.nav-tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
+
+            if (e) e.target.classList.add('active');
+            document.getElementById(`sec-${sec}`).classList.add('active');
+
+            const sectionActions = {
+                fichas: carregarFichasGrid,
+                respostas: carregarRespostas,
+                turmas: carregarTurmas,
+                materias: carregarMaterias,
+                professores: carregarProfessores,
+                vinculos: carregarVinculosForm
+            };
+            if (sectionActions[sec]) sectionActions[sec]();
+        }
+
+        const themeBtn = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+        const moonSvg = `<path d="M12.3 2a10 10 0 0 0 9.7 11.5 10 10 0 1 1-11.5-9.7z"/>`;
+        const sunSvg = `<path d="M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0-5a1 1 0 0 1 1 1v2a1 1 0 0 1-2 0V3a1 1 0 0 1 1-1zm0 17a1 1 0 0 1 1 1v2a1 1 0 0 1-2 0v-2a1 1 0 0 1 1-1zm9-9a1 1 0 0 1-1 1h-2a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1zM5 12a1 1 0 0 1-1 1H2a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1zm14.364-6.364a1 1 0 0 1 0 1.414l-1.414 1.414a1 1 0 0 1-1.414-1.414l1.414-1.414a1 1 0 0 1 1.414 0zM7.05 16.95a1 1 0 0 1 0 1.414l-1.414 1.414a1 1 0 0 1-1.414-1.414l1.414-1.414a1 1 0 0 1 1.414 0zm12.728 12.728a1 1 0 0 1-1.414 0l-1.414-1.414a1 1 0 0 1 1.414-1.414l1.414 1.414a1 1 0 0 1 0 1.414zM7.05 7.05a1 1 0 0 1-1.414 0L4.222 5.636a1 1 0 0 1 1.414-1.414l1.414 1.414a1 1 0 0 1 0 1.414z"/>`;
+
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            themeIcon.innerHTML = sunSvg;
+        }
+
+        themeBtn.addEventListener('click', () => {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            document.documentElement.toggleAttribute('data-theme', !isDark);
+            localStorage.setItem('theme', isDark ? 'light' : 'dark');
+            themeIcon.innerHTML = isDark ? moonSvg : sunSvg;
+        });
+
+        function fazerLogout() { localStorage.clear(); window.location.href = 'index.html'; }
+
+        async function abrirModalFicha() {
+            const [turmas, mats] = await Promise.all([
+                requestAPI('/api/turmas'),
+                requestAPI('/api/materias')
+            ]);
+
+            document.getElementById('modalTurma').innerHTML = '<option value="">Aplicar a: Todas as Turmas</option>' + (turmas || []).map(t => `<option value="${t.id}">${t.nome}</option>`).join('');
+            document.getElementById('modalMateria').innerHTML = '<option value="">Aplicar a: Todas as Matérias</option>' + (mats || []).map(m => `<option value="${m.id}">${m.nome}</option>`).join('');
+
+            document.getElementById('containerPerguntasModal').innerHTML = '';
+            adicionarLinhaPergunta();
+            document.getElementById('modalFicha').classList.add('active');
+        }
+
+        function fecharModalFicha() { document.getElementById('modalFicha').classList.remove('active'); }
+
+        function adicionarLinhaPergunta() {
+            const div = document.createElement('div');
+            div.className = 'pergunta-row';
+            div.innerHTML = `
+                <input type="text" placeholder="Digite a pergunta ou critério..." required class="input-pergunta-texto">
+                <select class="select-pergunta-cat">
+                    <option value="Desempenho Acadêmico">Desempenho</option>
+                    <option value="Comportamento e Disciplina">Comportamento</option>
+                    <option value="Participação e Engajamento">Participação</option>
+                    <option value="Assiduidade e Pontualidade">Assiduidade</option>
+                    <option value="Geral">Geral</option>
+                </select>
+                <button type="button" class="btn-remove-row" onclick="this.parentElement.remove()">✕</button>
+            `;
+            document.getElementById('containerPerguntasModal').appendChild(div);
+        }
+
+        document.getElementById('formNovaFicha').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const turma_id = document.getElementById('modalTurma').value || null;
+            const materia_id = document.getElementById('modalMateria').value || null;
+
+            const rows = document.querySelectorAll('.pergunta-row');
+            for (let row of rows) {
+                const texto = row.querySelector('.input-pergunta-texto').value.trim();
+                const categoria = row.querySelector('.select-pergunta-cat').value;
+
+                if (texto) {
+                    await requestAPI('/api/perguntas', {
+                        method: 'POST',
+                        body: { texto_pergunta: texto, texto: texto, pergunta: texto, categoria, turma_id, materia_id }
+                    });
+                }
+            }
+
+            fecharModalFicha();
+            carregarFichasGrid();
+        });
+
+        async function carregarFichasGrid() {
+            const grid = document.getElementById('gridFichas');
+            const [pergRes, turmas, mats] = await Promise.all([
+                requestAPI('/api/perguntas'),
+                requestAPI('/api/turmas'),
+                requestAPI('/api/materias')
+            ]);
+
+            if (!pergRes || pergRes.length === 0) {
+                grid.innerHTML = '<p style="grid-column: 1/-1; text-align:center; opacity:0.7; padding:2rem;">Nenhuma ficha cadastrada. Clique no botão acima para criar a primeira.</p>';
+                return;
+            }
+
+            const turmaMap = Object.fromEntries((turmas || []).map(t => [t.id, t.nome]));
+            const matMap = Object.fromEntries((mats || []).map(m => [m.id, m.nome]));
+
+            grid.innerHTML = (pergRes || []).map(p => `
+                <div class="ficha-card">
+                    <div>
+                        <div class="ficha-card-title">${p.texto_pergunta || p.texto || p.pergunta || 'Critério Sem Texto'}</div>
+                        <div class="ficha-card-info"><strong>Turma:</strong> ${p.turma_id ? turmaMap[p.turma_id] : 'Todas as Turmas'}</div>
+                        <div class="ficha-card-info"><strong>Matéria:</strong> ${p.materia_id ? matMap[p.materia_id] : 'Todas as Matérias'}</div>
+                        <span class="badge-cat">${p.categoria || 'Geral'}</span>
+                    </div>
+                    <div class="ficha-card-actions">
+                        <button class="btn-delete" onclick="deletarItem('/api/perguntas/${p.id}', carregarFichasGrid)">Excluir Critério</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function carregarRespostas() {
+            const container = document.getElementById('containerRespostas');
+            const respostas = await requestAPI('/api/respostas');
+
+            if (!respostas || respostas.length === 0) {
+                container.innerHTML = '<p>Nenhuma resposta submetida até o momento.</p>';
+                return;
+            }
+
+            container.innerHTML = respostas.map(r => `
+                <div class="resposta-card">
+                    <div class="resposta-header">Turma: ${r.turmas?.nome || 'N/A'} | Matéria: ${r.materias?.nome || 'N/A'}</div>
+                    <div><strong>Professor:</strong> ${r.professores?.nome || 'Não identificado'}</div>
+                    <div class="resposta-item">
+                        <span class="badge-cat" style="margin-bottom:4px;">${r.perguntas?.categoria || 'Avaliação'}</span><br>
+                        <strong>Critério:</strong> ${r.perguntas?.texto_pergunta || r.perguntas?.texto || r.perguntas?.pergunta || 'Pergunta'}<br>
+                        <strong>Resposta:</strong> ${r.resposta || r.texto_resposta || 'Sem resposta'}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function carregarProfessores() {
+            const data = await requestAPI('/api/professores');
+            if (!data) return;
+            document.getElementById('tabelaProfessores').innerHTML = data.map(p => {
+                const eOMesmo = String(p.id) === String(usuarioLogado.id) || (p.email && p.email === usuarioLogado.email);
+                return `<tr><td>${p.nome}</td><td>${p.email || '-'}</td><td>${p.tipo || 'professor'}</td><td>${eOMesmo ? '(Você)' : `<button class="btn-delete" onclick="deletarItem('/api/professores/${p.id}', carregarProfessores)">Excluir</button>`}</td></tr>`;
+            }).join('');
+        }
+
+        async function carregarTurmas() {
+            const data = await requestAPI('/api/turmas');
+            if (!data) return;
+            document.getElementById('tabelaTurmas').innerHTML = data.map(t => `<tr><td>${t.nome}</td><td><button class="btn-delete" onclick="deletarItem('/api/turmas/${t.id}', carregarTurmas)">Excluir</button></td></tr>`).join('');
+        }
+
+        async function carregarMaterias() {
+            const data = await requestAPI('/api/materias');
+            if (!data) return;
+            document.getElementById('tabelaMaterias').innerHTML = data.map(m => `<tr><td>${m.nome}</td><td><button class="btn-delete" onclick="deletarItem('/api/materias/${m.id}', carregarMaterias)">Excluir</button></td></tr>`).join('');
+        }
+
+        async function carregarVinculosForm() {
+            const [profs, turmas, mats, vinculos] = await Promise.all([
+                requestAPI('/api/professores'),
+                requestAPI('/api/turmas'),
+                requestAPI('/api/materias'),
+                requestAPI('/api/vinculos')
+            ]);
+            document.getElementById('selectProfVinculo').innerHTML = '<option value="">Selecione o Professor</option>' + (profs || []).map(p => `<option value="${p.id}">${p.nome}</option>`).join('');
+            document.getElementById('selectTurmaVinculo').innerHTML = '<option value="">Selecione a Turma</option>' + (turmas || []).map(t => `<option value="${t.id}">${t.nome}</option>`).join('');
+            document.getElementById('selectMateriaVinculo').innerHTML = '<option value="">Selecione a Matéria</option>' + (mats || []).map(m => `<option value="${m.id}">${m.nome}</option>`).join('');
+            document.getElementById('tabelaVinculos').innerHTML = (vinculos || []).map(v => `<tr><td>${v.professores?.nome || '-'}</td><td>${v.turmas?.nome || '-'}</td><td>${v.materias?.nome || '-'}</td></tr>`).join('');
+        }
+
+        function bindFormSubmit(formId, inputId, endpoint, reloadFn) {
+            document.getElementById(formId).addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const input = document.getElementById(inputId);
+                const val = input.value.trim();
+                if (!val) return;
+
+                const res = await requestAPI(endpoint, { method: 'POST', body: { nome: val } });
+                if (res) {
+                    input.value = '';
+                    reloadFn();
+                }
+            });
+        }
+
+        bindFormSubmit('formTurma', 'inputTurmaNome', '/api/turmas', carregarTurmas);
+        bindFormSubmit('formMateria', 'inputMateriaNome', '/api/materias', carregarMaterias);
+
+        document.getElementById('formProfessor').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const nome = document.getElementById('inputProfNome').value.trim();
+            const email = document.getElementById('inputProfEmail').value.trim();
+
+            const res = await requestAPI('/api/professores', { method: 'POST', body: { nome, email } });
+            if (res) {
+                document.getElementById('inputProfNome').value = '';
+                document.getElementById('inputProfEmail').value = '';
+                carregarProfessores();
+            }
+        });
+
+        document.getElementById('formVinculo').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const professor_id = document.getElementById('selectProfVinculo').value;
+            const turma_id = document.getElementById('selectTurmaVinculo').value;
+            const materia_id = document.getElementById('selectMateriaVinculo').value;
+
+            const res = await requestAPI('/api/vinculos', { method: 'POST', body: { professor_id, turma_id, materia_id } });
+            if (res) {
+                alert('Vínculo criado com sucesso!');
+                carregarVinculosForm();
+            }
+        });
+
+        carregarFichasGrid();
+    </script>
+</body>
+</html>
