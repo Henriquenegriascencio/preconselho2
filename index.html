@@ -273,11 +273,10 @@
             const login = document.getElementById('loginEmail').value.trim();
             const senha = document.getElementById('loginSenha').value.trim();
 
-            try {
-                const res = await fetch('/api/auth/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: login, usuario: login, senha })
+            try {fetch('https://github.com/Henriquenegriascencio/preconselho2/main/index.js', {
+               method: 'POST',
+               headers: { 'Content-Type': 'application/json' },
+               body: JSON.stringify({ email, password })
                 });
 
                 const data = await res.json();
