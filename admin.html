@@ -6,6 +6,10 @@
     <title>Pré-Conselho - Painel de Administração</title>
     
     <script>
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+
         (function() {
             const usuarioRaw = localStorage.getItem('usuario') || localStorage.getItem('user');
             if (!usuarioRaw) { window.location.href = 'index.html'; return; }
@@ -59,8 +63,8 @@
         .header-actions { display: flex; align-items: center; gap: 1rem; }
         .user-badge { font-size: 0.85rem; font-weight: 600; background: var(--primary-blue); color: #fff; padding: 0.3rem 0.8rem; border-radius: 20px; }
 
-        .icon-btn { background: none; border: 1px solid var(--border-color); padding: 8px; border-radius: 8px; cursor: pointer; color: var(--text-color); }
-        .icon-btn svg { width: 20px; height: 20px; fill: currentColor; }
+        .icon-btn { background: none; border: 1px solid var(--border-color); padding: 8px; border-radius: 8px; cursor: pointer; color: var(--text-color); display: inline-flex; align-items: center; justify-content: center; }
+        .icon-btn svg { width: 20px; height: 20px; fill: currentColor; display: block; }
         .btn-logout { background-color: var(--danger-red); color: #ffffff; border: none; padding: 0.5rem 1rem; border-radius: 6px; font-weight: 600; cursor: pointer; }
 
         main { flex: 1; padding: 2rem; max-width: 1200px; width: 100%; margin: 0 auto; }
@@ -72,15 +76,18 @@
         .tab-section { display: none; background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; box-shadow: var(--shadow); }
         .tab-section.active { display: block; }
 
-        .section-header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .section-header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
         .section-title { font-size: 1.2rem; font-weight: 700; color: var(--primary-blue); }
 
         .btn-primary { background-color: var(--primary-blue); color: #ffffff; border: none; padding: 0.65rem 1.2rem; border-radius: 6px; font-weight: 600; cursor: pointer; }
         .btn-primary:hover { background-color: var(--primary-hover); }
         .btn-secondary { background-color: transparent; color: var(--text-color); border: 1px solid var(--border-color); padding: 0.65rem 1.2rem; border-radius: 6px; font-weight: 600; cursor: pointer; }
+        .btn-secondary:hover { border-color: var(--primary-blue); color: var(--primary-blue); }
 
         .fichas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.25rem; margin-top: 1rem; }
-        .ficha-card { background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between; box-shadow: var(--shadow); }
+        .ficha-card { background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between; box-shadow: var(--shadow); transition: transform 0.15s, border-color 0.15s; }
+        .ficha-card.clickable { cursor: pointer; }
+        .ficha-card.clickable:hover { transform: translateY(-2px); border-color: var(--primary-blue); }
         .ficha-card-title { font-size: 1.1rem; font-weight: 700; color: var(--primary-blue); margin-bottom: 0.5rem; }
         .ficha-card-info { font-size: 0.9rem; margin-bottom: 0.3rem; opacity: 0.85; }
         .badge-cat { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.75rem; font-weight: 700; background-color: var(--primary-blue); color: white; margin-top: 0.5rem; }
@@ -106,9 +113,45 @@
         th { background-color: var(--table-header-bg); font-weight: 600; }
         .btn-delete { background-color: var(--danger-red); color: white; border: none; padding: 0.35rem 0.75rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem; }
 
-        .resposta-card { border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; margin-bottom: 1rem; background-color: var(--input-bg); }
-        .resposta-header { font-weight: 700; color: var(--primary-blue); margin-bottom: 0.5rem; }
-        .resposta-item { margin-top: 0.5rem; padding-left: 0.5rem; border-left: 3px solid var(--primary-blue); }
+        /* Navegação separada das Respostas */
+        .breadcrumb-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+            padding: 1rem 1.25rem;
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            margin-bottom: 1.25rem;
+        }
+        .breadcrumb-info { font-size: 0.95rem; }
+        .breadcrumb-info strong { color: var(--primary-blue); }
+
+        .category-group-card {
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            background-color: var(--input-bg);
+        }
+        .category-group-title {
+            font-weight: 700;
+            color: var(--primary-blue);
+            font-size: 1rem;
+            padding-bottom: 0.5rem;
+            margin-bottom: 0.85rem;
+            border-bottom: 1px dashed var(--border-color);
+        }
+        .resposta-item {
+            margin-bottom: 0.9rem;
+            padding-left: 0.75rem;
+            border-left: 3px solid var(--primary-blue);
+        }
+        .resposta-item:last-child { margin-bottom: 0; }
+        .resposta-pergunta { font-weight: 600; font-size: 0.92rem; margin-bottom: 0.25rem; }
+        .resposta-texto { font-size: 0.95rem; opacity: 0.9; white-space: pre-wrap; }
     </style>
 </head>
 <body>
@@ -117,7 +160,7 @@
         <div class="header-title">Painel do Administrador</div>
         <div class="header-actions">
             <span id="userBadge" class="user-badge">Admin</span>
-            <button id="themeToggle" class="icon-btn" aria-label="Alternar Tema">
+            <button id="themeToggle" class="icon-btn" aria-label="Alternar Tema" title="Alternar Tema">
                 <svg id="themeIcon" viewBox="0 0 24 24"><path d="M12.3 2a10 10 0 0 0 9.7 11.5 10 10 0 1 1-11.5-9.7z"/></svg>
             </button>
             <button onclick="fazerLogout()" class="btn-logout">Sair</button>
@@ -146,12 +189,17 @@
         </div>
 
         <div id="sec-respostas" class="tab-section">
-            <div class="section-title">Respostas Submetidas pelos Professores</div>
+            <div class="section-header-flex" style="margin-bottom: 1rem;">
+                <div>
+                    <div class="section-title">Respostas Submetidas pelos Professores</div>
+                    <p style="font-size:0.875rem; opacity:0.8;">Escolha a ficha avaliativa e depois selecione o professor para visualizar as respostas.</p>
+                </div>
+            </div>
             <div id="containerRespostas">Carregando respostas...</div>
         </div>
 
         <div id="sec-turmas" class="tab-section">
-            <div class="section-title">Gerenciamento de Turmas</div>
+            <div class="section-title" style="margin-bottom:1rem;">Gerenciamento de Turmas</div>
             <form id="formTurma" style="display:flex; gap:1rem; margin-bottom:1rem;">
                 <input type="text" id="inputTurmaNome" placeholder="Ex: 9º Ano A" required style="flex:1; padding:0.6rem; border-radius:6px; border:1px solid var(--border-color); background:var(--input-bg); color:var(--text-color);">
                 <button type="submit" class="btn-primary">Adicionar Turma</button>
@@ -160,7 +208,7 @@
         </div>
 
         <div id="sec-materias" class="tab-section">
-            <div class="section-title">Gerenciamento de Matérias</div>
+            <div class="section-title" style="margin-bottom:1rem;">Gerenciamento de Matérias</div>
             <form id="formMateria" style="display:flex; gap:1rem; margin-bottom:1rem;">
                 <input type="text" id="inputMateriaNome" placeholder="Ex: Matemática" required style="flex:1; padding:0.6rem; border-radius:6px; border:1px solid var(--border-color); background:var(--input-bg); color:var(--text-color);">
                 <button type="submit" class="btn-primary">Adicionar Matéria</button>
@@ -169,7 +217,7 @@
         </div>
 
         <div id="sec-professores" class="tab-section">
-            <div class="section-title">Professores Cadastrados</div>
+            <div class="section-title" style="margin-bottom:1rem;">Professores Cadastrados</div>
             <form id="formProfessor" style="display:flex; gap:1rem; margin-bottom:1rem; flex-wrap:wrap;">
                 <input type="text" id="inputProfNome" placeholder="Nome do Professor" required style="flex:1; padding:0.6rem; border-radius:6px; border:1px solid var(--border-color); background:var(--input-bg); color:var(--text-color);">
                 <input type="email" id="inputProfEmail" placeholder="email@escola.com" required style="flex:1; padding:0.6rem; border-radius:6px; border:1px solid var(--border-color); background:var(--input-bg); color:var(--text-color);">
@@ -179,7 +227,7 @@
         </div>
 
         <div id="sec-vinculos" class="tab-section">
-            <div class="section-title">Vincular Professor a Turma e Matéria</div>
+            <div class="section-title" style="margin-bottom:1rem;">Vincular Professor a Turma e Matéria</div>
             <form id="formVinculo" style="display:flex; gap:1rem; margin-bottom:1rem; flex-wrap:wrap;">
                 <select id="selectProfVinculo" required style="flex:1; padding:0.6rem; border-radius:6px; border:1px solid var(--border-color); background:var(--input-bg); color:var(--text-color);"><option value="">Selecione o Professor</option></select>
                 <select id="selectTurmaVinculo" required style="flex:1; padding:0.6rem; border-radius:6px; border:1px solid var(--border-color); background:var(--input-bg); color:var(--text-color);"><option value="">Selecione a Turma</option></select>
@@ -218,6 +266,14 @@
     <script>
         const usuarioLogado = JSON.parse(localStorage.getItem('usuario') || localStorage.getItem('user') || '{}');
         document.getElementById('userBadge').textContent = usuarioLogado.nome || 'Administrador';
+
+        function escapeHtml(str) {
+            return String(str || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
 
         async function requestAPI(url, options = {}) {
             try {
@@ -264,21 +320,28 @@
             if (sectionActions[sec]) sectionActions[sec]();
         }
 
+        // MODO ESCURO CORRIGIDO
         const themeBtn = document.getElementById('themeToggle');
         const themeIcon = document.getElementById('themeIcon');
         const moonSvg = `<path d="M12.3 2a10 10 0 0 0 9.7 11.5 10 10 0 1 1-11.5-9.7z"/>`;
-        const sunSvg = `<path d="M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0-5a1 1 0 0 1 1 1v2a1 1 0 0 1-2 0V3a1 1 0 0 1 1-1zm0 17a1 1 0 0 1 1 1v2a1 1 0 0 1-2 0v-2a1 1 0 0 1 1-1zm9-9a1 1 0 0 1-1 1h-2a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1zM5 12a1 1 0 0 1-1 1H2a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1zm14.364-6.364a1 1 0 0 1 0 1.414l-1.414 1.414a1 1 0 0 1-1.414-1.414l1.414-1.414a1 1 0 0 1 1.414 0zM7.05 16.95a1 1 0 0 1 0 1.414l-1.414 1.414a1 1 0 0 1-1.414-1.414l1.414-1.414a1 1 0 0 1 1.414 0zm12.728 12.728a1 1 0 0 1-1.414 0l-1.414-1.414a1 1 0 0 1 1.414-1.414l1.414 1.414a1 1 0 0 1 0 1.414zM7.05 7.05a1 1 0 0 1-1.414 0L4.222 5.636a1 1 0 0 1 1.414-1.414l1.414 1.414a1 1 0 0 1 0 1.414z"/>`;
+        const sunSvg = `<path d="M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0-5a1 1 0 0 1 1 1v2a1 1 0 0 1-2 0V3a1 1 0 0 1 1-1zm0 17a1 1 0 0 1 1 1v2a1 1 0 0 1-2 0v-2a1 1 0 0 1 1-1zm9-9a1 1 0 0 1-1 1h-2a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1zM5 12a1 1 0 0 1-1 1H2a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1zm14.364-6.364a1 1 0 0 1 0 1.414l-1.414 1.414a1 1 0 0 1-1.414-1.414l1.414-1.414a1 1 0 0 1 1.414 0zM7.05 16.95a1 1 0 0 1 0 1.414l-1.414 1.414a1 1 0 0 1-1.414-1.414l1.414-1.414a1 1 0 0 1 1.414 0zm12.728 2.828a1 1 0 0 1-1.414 0l-1.414-1.414a1 1 0 0 1 1.414-1.414l1.414 1.414a1 1 0 0 1 0 1.414zM7.05 7.05a1 1 0 0 1-1.414 0L4.222 5.636a1 1 0 0 1 1.414-1.414l1.414 1.414a1 1 0 0 1 0 1.414z"/>`;
 
-        if (localStorage.getItem('theme') === 'dark') {
-            document.documentElement.setAttribute('data-theme', 'dark');
-            themeIcon.innerHTML = sunSvg;
+        function atualizarIconeTema() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            themeIcon.innerHTML = isDark ? sunSvg : moonSvg;
         }
+        atualizarIconeTema();
 
         themeBtn.addEventListener('click', () => {
             const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-            document.documentElement.toggleAttribute('data-theme', !isDark);
-            localStorage.setItem('theme', isDark ? 'light' : 'dark');
-            themeIcon.innerHTML = isDark ? moonSvg : sunSvg;
+            if (isDark) {
+                document.documentElement.removeAttribute('data-theme');
+                localStorage.setItem('theme', 'light');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+            }
+            atualizarIconeTema();
         });
 
         function fazerLogout() { localStorage.clear(); window.location.href = 'index.html'; }
@@ -289,8 +352,8 @@
                 requestAPI('/api/materias')
             ]);
 
-            document.getElementById('modalTurma').innerHTML = '<option value="">Aplicar a: Todas as Turmas</option>' + (turmas || []).map(t => `<option value="${t.id}">${t.nome}</option>`).join('');
-            document.getElementById('modalMateria').innerHTML = '<option value="">Aplicar a: Todas as Matérias</option>' + (mats || []).map(m => `<option value="${m.id}">${m.nome}</option>`).join('');
+            document.getElementById('modalTurma').innerHTML = '<option value="">Aplicar a: Todas as Turmas</option>' + (turmas || []).map(t => `<option value="${t.id}">${escapeHtml(t.nome)}</option>`).join('');
+            document.getElementById('modalMateria').innerHTML = '<option value="">Aplicar a: Todas as Matérias</option>' + (mats || []).map(m => `<option value="${m.id}">${escapeHtml(m.nome)}</option>`).join('');
 
             document.getElementById('containerPerguntasModal').innerHTML = '';
             adicionarLinhaPergunta();
@@ -357,10 +420,10 @@
             grid.innerHTML = (pergRes || []).map(p => `
                 <div class="ficha-card">
                     <div>
-                        <div class="ficha-card-title">${p.texto_pergunta || p.texto || p.pergunta || 'Critério Sem Texto'}</div>
-                        <div class="ficha-card-info"><strong>Turma:</strong> ${p.turma_id ? turmaMap[p.turma_id] : 'Todas as Turmas'}</div>
-                        <div class="ficha-card-info"><strong>Matéria:</strong> ${p.materia_id ? matMap[p.materia_id] : 'Todas as Matérias'}</div>
-                        <span class="badge-cat">${p.categoria || 'Geral'}</span>
+                        <div class="ficha-card-title">${escapeHtml(p.texto_pergunta || p.texto || p.pergunta || 'Critério Sem Texto')}</div>
+                        <div class="ficha-card-info"><strong>Turma:</strong> ${p.turma_id ? escapeHtml(turmaMap[p.turma_id]) : 'Todas as Turmas'}</div>
+                        <div class="ficha-card-info"><strong>Matéria:</strong> ${p.materia_id ? escapeHtml(matMap[p.materia_id]) : 'Todas as Matérias'}</div>
+                        <span class="badge-cat">${escapeHtml(p.categoria || 'Geral')}</span>
                     </div>
                     <div class="ficha-card-actions">
                         <button class="btn-delete" onclick="deletarItem('/api/perguntas/${p.id}', carregarFichasGrid)">Excluir Critério</button>
@@ -369,26 +432,172 @@
             `).join('');
         }
 
+        // =========================================================================
+        // RESPOSTAS EM 3 ETAPAS: 1. ESCOLHER FICHA -> 2. ESCOLHER PROFESSOR -> 3. VER RESPOSTAS
+        // =========================================================================
+        let respostasAgrupadasPorFicha = {};
+
         async function carregarRespostas() {
             const container = document.getElementById('containerRespostas');
+            container.innerHTML = '<p style="opacity:0.7;">Carregando respostas...</p>';
+
             const respostas = await requestAPI('/api/respostas');
 
             if (!respostas || respostas.length === 0) {
-                container.innerHTML = '<p>Nenhuma resposta submetida até o momento.</p>';
+                container.innerHTML = '<p style="opacity:0.7; padding:1rem 0;">Nenhuma resposta submetida até o momento.</p>';
                 return;
             }
 
-            container.innerHTML = respostas.map(r => `
-                <div class="resposta-card">
-                    <div class="resposta-header">Turma: ${r.turmas?.nome || 'N/A'} | Matéria: ${r.materias?.nome || 'N/A'}</div>
-                    <div><strong>Professor:</strong> ${r.professores?.nome || 'Não identificado'}</div>
-                    <div class="resposta-item">
-                        <span class="badge-cat" style="margin-bottom:4px;">${r.perguntas?.categoria || 'Avaliação'}</span><br>
-                        <strong>Critério:</strong> ${r.perguntas?.texto_pergunta || r.perguntas?.texto || r.perguntas?.pergunta || 'Pergunta'}<br>
-                        <strong>Resposta:</strong> ${r.resposta || r.texto_resposta || 'Sem resposta'}
+            respostasAgrupadasPorFicha = {};
+
+            respostas.forEach(r => {
+                const turmaId = String(r.turma_id || r.turmas?.id || 'sem-turma');
+                const materiaId = String(r.materia_id || r.materias?.id || 'sem-materia');
+                const fichaKey = `${turmaId}__${materiaId}`;
+
+                const turmaNome = r.turmas?.nome || 'Turma não especificada';
+                const materiaNome = r.materias?.nome || 'Matéria não especificada';
+
+                if (!respostasAgrupadasPorFicha[fichaKey]) {
+                    respostasAgrupadasPorFicha[fichaKey] = {
+                        key: fichaKey,
+                        turmaNome,
+                        materiaNome,
+                        professores: {},
+                        totalRespostas: 0
+                    };
+                }
+
+                const profId = String(r.professor_id || r.usuario_id || r.professores?.id || r.professores?.nome || 'prof-desconhecido');
+                const profNome = r.professores?.nome || 'Professor não identificado';
+
+                if (!respostasAgrupadasPorFicha[fichaKey].professores[profId]) {
+                    respostasAgrupadasPorFicha[fichaKey].professores[profId] = {
+                        id: profId,
+                        nome: profNome,
+                        itens: []
+                    };
+                }
+
+                respostasAgrupadasPorFicha[fichaKey].professores[profId].itens.push(r);
+                respostasAgrupadasPorFicha[fichaKey].totalRespostas++;
+            });
+
+            renderizarEtapaFichas();
+        }
+
+        // Etapa 1: Escolher a Ficha (Turma + Matéria)
+        function renderizarEtapaFichas() {
+            const container = document.getElementById('containerRespostas');
+            const fichas = Object.values(respostasAgrupadasPorFicha);
+
+            if (fichas.length === 0) {
+                container.innerHTML = '<p style="opacity:0.7;">Nenhuma ficha respondida encontrada.</p>';
+                return;
+            }
+
+            container.innerHTML = `
+                <div style="margin-bottom: 0.75rem; font-weight: 600; font-size: 0.95rem;">
+                    Etapa 1 de 3 — Selecione a Ficha Avaliativa:
+                </div>
+                <div class="fichas-grid">
+                    ${fichas.map(f => {
+                        const qtdProfs = Object.keys(f.professores).length;
+                        return `
+                            <div class="ficha-card clickable" onclick="renderizarEtapaProfessores('${escapeHtml(f.key)}')">
+                                <div>
+                                    <div class="ficha-card-title">${escapeHtml(f.turmaNome)} — ${escapeHtml(f.materiaNome)}</div>
+                                    <div class="ficha-card-info"><strong>Professores que responderam:</strong> ${qtdProfs}</div>
+                                    <div class="ficha-card-info"><strong>Total de critérios avaliados:</strong> ${f.totalRespostas}</div>
+                                </div>
+                                <div class="ficha-card-actions" style="justify-content: space-between; align-items: center;">
+                                    <span style="font-size: 0.85rem; font-weight: 600; color: var(--primary-blue);">Ver professores →</span>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
+
+        // Etapa 2: Escolher o Professor dentro da Ficha selecionada
+        function renderizarEtapaProfessores(fichaKey) {
+            const ficha = respostasAgrupadasPorFicha[fichaKey];
+            if (!ficha) { renderizarEtapaFichas(); return; }
+
+            const container = document.getElementById('containerRespostas');
+            const listaProfs = Object.values(ficha.professores);
+
+            container.innerHTML = `
+                <div class="breadcrumb-bar">
+                    <div class="breadcrumb-info">
+                        Etapa 2 de 3 — Ficha: <strong>${escapeHtml(ficha.turmaNome)} • ${escapeHtml(ficha.materiaNome)}</strong>
+                    </div>
+                    <button type="button" class="btn-secondary" onclick="renderizarEtapaFichas()">← Voltar para Fichas</button>
+                </div>
+                <div style="margin-bottom: 0.75rem; font-weight: 600; font-size: 0.95rem;">
+                    Selecione o Professor para analisar as respostas:
+                </div>
+                <div class="fichas-grid">
+                    ${listaProfs.map(prof => `
+                        <div class="ficha-card clickable" onclick="renderizarEtapaDetalheProfessor('${escapeHtml(fichaKey)}', '${escapeHtml(prof.id)}')">
+                            <div>
+                                <div class="ficha-card-title">${escapeHtml(prof.nome)}</div>
+                                <div class="ficha-card-info"><strong>Critérios respondidos:</strong> ${prof.itens.length}</div>
+                            </div>
+                            <div class="ficha-card-actions" style="justify-content: space-between; align-items: center;">
+                                <span style="font-size: 0.85rem; font-weight: 600; color: var(--primary-blue);">Abrir respostas →</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // Etapa 3: Visualizar respostas apenas do Professor selecionado na Ficha selecionada
+        function renderizarEtapaDetalheProfessor(fichaKey, profId) {
+            const ficha = respostasAgrupadasPorFicha[fichaKey];
+            if (!ficha || !ficha.professores[profId]) { renderizarEtapaFichas(); return; }
+
+            const prof = ficha.professores[profId];
+            const container = document.getElementById('containerRespostas');
+
+            // Agrupa os critérios respondidos por categoria para facilitar a leitura
+            const porCategoria = {};
+            prof.itens.forEach(item => {
+                const cat = item.perguntas?.categoria || 'Avaliação Geral';
+                if (!porCategoria[cat]) porCategoria[cat] = [];
+                porCategoria[cat].push(item);
+            });
+
+            let blocosHtml = '';
+            for (const cat in porCategoria) {
+                blocosHtml += `
+                    <div class="category-group-card">
+                        <div class="category-group-title">${escapeHtml(cat)}</div>
+                        ${porCategoria[cat].map(r => `
+                            <div class="resposta-item">
+                                <div class="resposta-pergunta">${escapeHtml(r.perguntas?.texto_pergunta || r.perguntas?.texto || r.perguntas?.pergunta || 'Critério')}</div>
+                                <div class="resposta-texto">${escapeHtml(r.resposta || r.texto_resposta || 'Sem resposta')}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            container.innerHTML = `
+                <div class="breadcrumb-bar">
+                    <div class="breadcrumb-info">
+                        Ficha: <strong>${escapeHtml(ficha.turmaNome)} • ${escapeHtml(ficha.materiaNome)}</strong> &nbsp;|&nbsp;
+                        Professor: <strong>${escapeHtml(prof.nome)}</strong>
+                    </div>
+                    <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                        <button type="button" class="btn-secondary" onclick="renderizarEtapaProfessores('${escapeHtml(fichaKey)}')">← Voltar para Professores</button>
+                        <button type="button" class="btn-secondary" onclick="renderizarEtapaFichas()">Todas as Fichas</button>
                     </div>
                 </div>
-            `).join('');
+                ${blocosHtml}
+            `;
         }
 
         async function carregarProfessores() {
@@ -396,20 +605,20 @@
             if (!data) return;
             document.getElementById('tabelaProfessores').innerHTML = data.map(p => {
                 const eOMesmo = String(p.id) === String(usuarioLogado.id) || (p.email && p.email === usuarioLogado.email);
-                return `<tr><td>${p.nome}</td><td>${p.email || '-'}</td><td>${p.tipo || 'professor'}</td><td>${eOMesmo ? '(Você)' : `<button class="btn-delete" onclick="deletarItem('/api/professores/${p.id}', carregarProfessores)">Excluir</button>`}</td></tr>`;
+                return `<tr><td>${escapeHtml(p.nome)}</td><td>${escapeHtml(p.email || '-')}</td><td>${escapeHtml(p.tipo || 'professor')}</td><td>${eOMesmo ? '(Você)' : `<button class="btn-delete" onclick="deletarItem('/api/professores/${p.id}', carregarProfessores)">Excluir</button>`}</td></tr>`;
             }).join('');
         }
 
         async function carregarTurmas() {
             const data = await requestAPI('/api/turmas');
             if (!data) return;
-            document.getElementById('tabelaTurmas').innerHTML = data.map(t => `<tr><td>${t.nome}</td><td><button class="btn-delete" onclick="deletarItem('/api/turmas/${t.id}', carregarTurmas)">Excluir</button></td></tr>`).join('');
+            document.getElementById('tabelaTurmas').innerHTML = data.map(t => `<tr><td>${escapeHtml(t.nome)}</td><td><button class="btn-delete" onclick="deletarItem('/api/turmas/${t.id}', carregarTurmas)">Excluir</button></td></tr>`).join('');
         }
 
         async function carregarMaterias() {
             const data = await requestAPI('/api/materias');
             if (!data) return;
-            document.getElementById('tabelaMaterias').innerHTML = data.map(m => `<tr><td>${m.nome}</td><td><button class="btn-delete" onclick="deletarItem('/api/materias/${m.id}', carregarMaterias)">Excluir</button></td></tr>`).join('');
+            document.getElementById('tabelaMaterias').innerHTML = data.map(m => `<tr><td>${escapeHtml(m.nome)}</td><td><button class="btn-delete" onclick="deletarItem('/api/materias/${m.id}', carregarMaterias)">Excluir</button></td></tr>`).join('');
         }
 
         async function carregarVinculosForm() {
@@ -419,10 +628,10 @@
                 requestAPI('/api/materias'),
                 requestAPI('/api/vinculos')
             ]);
-            document.getElementById('selectProfVinculo').innerHTML = '<option value="">Selecione o Professor</option>' + (profs || []).map(p => `<option value="${p.id}">${p.nome}</option>`).join('');
-            document.getElementById('selectTurmaVinculo').innerHTML = '<option value="">Selecione a Turma</option>' + (turmas || []).map(t => `<option value="${t.id}">${t.nome}</option>`).join('');
-            document.getElementById('selectMateriaVinculo').innerHTML = '<option value="">Selecione a Matéria</option>' + (mats || []).map(m => `<option value="${m.id}">${m.nome}</option>`).join('');
-            document.getElementById('tabelaVinculos').innerHTML = (vinculos || []).map(v => `<tr><td>${v.professores?.nome || '-'}</td><td>${v.turmas?.nome || '-'}</td><td>${v.materias?.nome || '-'}</td></tr>`).join('');
+            document.getElementById('selectProfVinculo').innerHTML = '<option value="">Selecione o Professor</option>' + (profs || []).map(p => `<option value="${p.id}">${escapeHtml(p.nome)}</option>`).join('');
+            document.getElementById('selectTurmaVinculo').innerHTML = '<option value="">Selecione a Turma</option>' + (turmas || []).map(t => `<option value="${t.id}">${escapeHtml(t.nome)}</option>`).join('');
+            document.getElementById('selectMateriaVinculo').innerHTML = '<option value="">Selecione a Matéria</option>' + (mats || []).map(m => `<option value="${m.id}">${escapeHtml(m.nome)}</option>`).join('');
+            document.getElementById('tabelaVinculos').innerHTML = (vinculos || []).map(v => `<tr><td>${escapeHtml(v.professores?.nome || '-')}</td><td>${escapeHtml(v.turmas?.nome || '-')}</td><td>${escapeHtml(v.materias?.nome || '-')}</td></tr>`).join('');
         }
 
         function bindFormSubmit(formId, inputId, endpoint, reloadFn) {
